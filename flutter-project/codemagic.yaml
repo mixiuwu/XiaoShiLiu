@@ -1,31 +1,26 @@
 # Codemagic 配置 — 小石榴 Flutter 项目
-# 文档：https://docs.codemagic.io/yaml/yaml-getting-started/
-# 在 Codemagic 创建 App 关联 Git 仓库后自动生效。
+# 在 Codemagic 创建 App 关联 Git 仓库后，选对应 workflow 即可触发构建。
 workflows:
   # ---------------------------------------------------------------
-  # Android —— 出 APK（debug / release） 或 AAB（上架 Google Play）
+  # iOS 模拟器包（无签名，无需 Apple 账号，先看 UI 效果）
+  # Codemagic 会自动把 .app 打包成 .app.zip
   # ---------------------------------------------------------------
-  android-apk:
-    name: Android APK
-    max_build_duration: 60
+  ios-simulator:
+    name: iOS Simulator Preview
+    max_build_duration: 30
     environment:
-      sdk: default
       flutter: stable
-      vars:
-        # 可选：用 dart-define 覆盖 API 地址（默认已指向线上 https://git.aodde.com）
-        # API_BASE: https://git.aodde.com
-        CM_BUILD_TYPE: release
-      xcode: latest
+      xcode: 15.4
       cocoapods: default
+      vars:
+        CM_BUILD_TYPE: release
     scripts:
       - flutter --version
       - flutter pub get
-      # release APK（arm64 + arm，小体积，约 15~20MB）
-      - flutter build apk --release --target-platform android-arm64,android-arm
+      - flutter build ios --simulator --no-codesign
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+      - build/ios/iphonesimulator/*.app.zip
     publishing:
-      # 可选：自动发送到 Google Play / 邮件 / Slack
       email:
         recipients:
           - your@email.com
@@ -33,8 +28,11 @@ workflows:
           success: true
           failure: true
 
-  android-aab:
-    name: Android AAB (Google Play)
+  # ---------------------------------------------------------------
+  # Android Release APK（arm64 + arm，体积小）
+  # ---------------------------------------------------------------
+  android-apk:
+    name: Android APK Release
     max_build_duration: 60
     environment:
       sdk: default
@@ -44,17 +42,24 @@ workflows:
     scripts:
       - flutter --version
       - flutter pub get
-      - flutter build appbundle --release
+      - flutter build apk --release --target-platform android-arm64,android-arm
     artifacts:
-      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - your@email.com
+        notify:
+          success: true
+          failure: true
 
   # ---------------------------------------------------------------
-  # iOS —— 出 IPA（Ad Hoc / App Store）
-  # 需要在 Codemagic 上传 Apple 证书（.p12 + .mobileprovision）
-  # 或启用自动签名（需要 Team ID）
+  # iOS 真机 IPA（需要 Apple 开发者账号 $99/年 + 签名证书）
+  # 自动签名：在 Codemagic Team Settings 关联 App Store Connect
+  # 手动签名：在 Code Signing 上传 .p12 + .mobileprovision
   # ---------------------------------------------------------------
   ios-ipa:
-    name: iOS IPA
+    name: iOS IPA Release
     max_build_duration: 90
     environment:
       flutter: stable
@@ -63,15 +68,6 @@ workflows:
       vars:
         CM_BUILD_TYPE: release
         BUNDLE_ID: com.xiaoshiliu.xiaoshiliu-app
-      # 手动签名：从 Codemagic 账户上传证书后引用文件名
-      # signing:
-      #   ios:
-      #     certificate: AppleDistributionCert.p12
-      #     password: $CM_KEYSTORE_PASSWORD
-      #     profiles:
-      #       - AppStore_Profile.mobileprovision
-      # 或者自动签名（推荐，只需 Team ID）
-      automatic_signing: true
       automatic_signing_options:
         - team_id: YOUR_TEAM_ID
           bundle_identifier: com.xiaoshiliu.xiaoshiliu-app
@@ -80,7 +76,6 @@ workflows:
       - flutter --version
       - flutter pub get
       - flutter build ios --release --no-codesign
-      # 下面两步 Codemagic 会自动处理（codesign + xcodebuild archive/export）
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
@@ -90,21 +85,3 @@ workflows:
         notify:
           success: true
           failure: true
-      # 也可以自动上传到 TestFlight / App Store Connect
-      # app_store_connect:
-      #   api_key: APP_STORE_CONNECT_API_KEY
-      #   app_id: 0000000000
-
-  ios-simulator:
-    name: iOS Simulator (无签名，QA 测试)
-    max_build_duration: 30
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-    scripts:
-      - flutter --version
-      - flutter pub get
-      - flutter build ios --simulator
-    artifacts:
-      - build/ios/iphonesimulator/*.app.zip
