@@ -1,5 +1,8 @@
 # Codemagic 配置 — 小石榴 Flutter 项目
 # 在 Codemagic 创建 App 关联 Git 仓库后，选对应 workflow 即可触发构建。
+# codemagic.yaml 放在仓库根目录，project_name 指定 Flutter 项目所在子目录。
+
+project_name: XiaoShiLiu
 workflows:
   # ---------------------------------------------------------------
   # iOS 模拟器包（无签名，无需 Apple 账号，先看 UI 效果）
