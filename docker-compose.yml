@@ -1,0 +1,51 @@
+name: xiaoshiliu
+
+services:
+  # 后端 API 服务（数据库沿用外部 MySQL，由 express-project/.env.production 配置）
+  backend:
+    build:
+      context: ./express-project
+      dockerfile: Dockerfile
+    container_name: xiaoshiliu-backend
+    restart: unless-stopped
+    env_file:
+      - ./express-project/.env.production
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - xiaoshiliu-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端 Web / 管理后台（容器内 nginx 静态托管，并把 /api 反向代理到 backend）
+  frontend:
+    build:
+      context: ./vue3-project
+      dockerfile: Dockerfile
+    container_name: xiaoshiliu-frontend
+    restart: unless-stopped
+    ports:
+      # 宿主机 Nginx 负责 HTTPS，转发到这里
+      - "127.0.0.1:8080:80"
+    networks:
+      - xiaoshiliu-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  backend_uploads:
+    driver: local
+
+networks:
+  xiaoshiliu-network:
+    driver: bridge
