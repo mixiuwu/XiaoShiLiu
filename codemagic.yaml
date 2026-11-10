@@ -70,10 +70,6 @@ workflows:
       vars:
         CM_BUILD_TYPE: release
         BUNDLE_ID: com.xiaoshiliu.xiaoshiliu-app
-      automatic_signing_options:
-        - team_id: YOUR_TEAM_ID
-          bundle_identifier: com.xiaoshiliu.xiaoshiliu-app
-          profile_type: AppStore
     scripts:
       - flutter --version
       - flutter pub get
