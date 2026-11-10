@@ -38,7 +38,6 @@ workflows:
     name: Android APK Release
     max_build_duration: 60
     environment:
-      sdk: default
       flutter: stable
       vars:
         CM_BUILD_TYPE: release
