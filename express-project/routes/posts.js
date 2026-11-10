@@ -471,7 +471,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // 创建笔记
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, content, category_id, images, video, tags, status, type, music_id, poll } = req.body;
+    const { title, content, category_id, images, video, tags, status, type, music_id, poll, episodes } = req.body;
     const userId = req.user.id;
     const postType = type || 1; // 默认为图文类型
 
@@ -598,6 +598,30 @@ router.post('/', authenticateToken, async (req, res) => {
         [postId.toString(), video.url, coverUrl]
       );
       console.log('✅ 视频记录插入成功');
+    }
+
+    // 处理剧集分集（episodes 数组，视频合集）
+    if (episodes && Array.isArray(episodes) && episodes.length > 0) {
+      console.log('🎬 开始处理剧集分集，共', episodes.length, '集');
+
+      for (let i = 0; i < episodes.length; i++) {
+        const ep = episodes[i];
+        const title = ep.title || `第${String(i + 1).padStart(2, '0')}集`;
+        const videoUrl = ep.video_url || (ep.url || '');
+        const coverUrl = ep.cover_url || (ep.coverUrl || null);
+        const sort = ep.sort !== undefined ? ep.sort : i;
+
+        if (!videoUrl) {
+          console.log(`⚠️ 第${i + 1}集缺少 video_url，跳过`);
+          continue;
+        }
+
+        await pool.execute(
+          'INSERT INTO post_episodes (post_id, title, video_url, cover_url, sort) VALUES (?, ?, ?, ?, ?)',
+          [postId.toString(), title, videoUrl, coverUrl, sort]
+        );
+        console.log(`✅ 第${i + 1}集插入成功: ${title}`);
+      }
     }
 
     // 处理标签
@@ -995,7 +1019,7 @@ router.post('/:id/collect', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const postId = req.params.id;
-    const { title, content, category_id, images, video, tags, status } = req.body;
+    const { title, content, category_id, images, video, tags, status, episodes } = req.body;
     const userId = req.user.id;
 
     // 验证必填字段：如果不是草稿（status=2），则要求标题、内容和分类不能为空
@@ -1086,6 +1110,26 @@ router.put('/:id', authenticateToken, async (req, res) => {
               });
             }
           }
+        }
+      }
+
+      // 更新剧集分集（如果前端传了 episodes 字段）
+      if (episodes !== undefined && Array.isArray(episodes)) {
+        console.log('🎬 更新剧集分集，共', episodes.length, '集');
+        // 先删旧的
+        await pool.execute('DELETE FROM post_episodes WHERE post_id = ?', [postId.toString()]);
+        // 再插入新的
+        for (let i = 0; i < episodes.length; i++) {
+          const ep = episodes[i];
+          const title = ep.title || `第${String(i + 1).padStart(2, '0')}集`;
+          const videoUrl = ep.video_url || (ep.url || '');
+          const coverUrl = ep.cover_url || (ep.coverUrl || null);
+          const sort = ep.sort !== undefined ? ep.sort : i;
+          if (!videoUrl) continue;
+          await pool.execute(
+            'INSERT INTO post_episodes (post_id, title, video_url, cover_url, sort) VALUES (?, ?, ?, ?, ?)',
+            [postId.toString(), title, videoUrl, coverUrl, sort]
+          );
         }
       }
     } else {

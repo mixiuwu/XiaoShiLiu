@@ -62,6 +62,8 @@
               v-if="uploadType === 'video'"
               ref="videoUploadRef"
               v-model="form.video"
+              :episodes="form.episodes"
+              @update:episodes="handleEpisodesUpdate"
               @error="handleUploadError"
             />
           </div>
@@ -187,7 +189,8 @@ const form = reactive({
   images: [],
   video: null,
   tags: [],
-  category_id: null
+  category_id: null,
+  episodes: []
 })
 
 // 草稿相关状态
@@ -308,6 +311,10 @@ const goToDraftBox = () => {
 
 const handleUploadError = (error) => {
   showMessage(error, 'error')
+}
+
+const handleEpisodesUpdate = (episodes) => {
+  form.episodes = episodes || []
 }
 
 // 切换上传类型
@@ -606,7 +613,8 @@ const handlePublish = async () => {
       tags: form.tags,
       category_id: form.category_id,
       type: uploadType.value === 'image' ? 1 : 2, // 1: 图文, 2: 视频
-      status: 2 // 发布状态：2=待审核
+      status: 2, // 发布状态：2=待审核
+      episodes: uploadType.value === 'video' && form.episodes && form.episodes.length > 0 ? form.episodes : null
     }
 
 
@@ -656,6 +664,7 @@ const resetForm = () => {
   form.video = null
   form.tags = []
   form.category_id = null
+  form.episodes = []
   
   if (multiImageUploadRef.value) {
     multiImageUploadRef.value.reset()
@@ -851,7 +860,8 @@ const handleSaveDraft = async () => {
       tags: form.tags || [],
       category_id: form.category_id || null,
       type: uploadType.value === 'image' ? 1 : 2, // 1: 图文, 2: 视频
-      status: 1 // 草稿状态
+      status: 1, // 草稿状态
+      episodes: uploadType.value === 'video' && form.episodes && form.episodes.length > 0 ? form.episodes : null
     }
 
     showMessage('正在保存草稿...', 'info')
