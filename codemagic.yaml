@@ -13,7 +13,7 @@ workflows:
     max_build_duration: 30
     environment:
       flutter: stable
-      xcode: 15.4
+      xcode: latest
       cocoapods: default
       vars:
         CM_BUILD_TYPE: release
@@ -65,7 +65,7 @@ workflows:
     max_build_duration: 90
     environment:
       flutter: stable
-      xcode: 15.4
+      xcode: latest
       cocoapods: default
       vars:
         CM_BUILD_TYPE: release
