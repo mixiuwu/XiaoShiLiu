@@ -42,8 +42,9 @@ workflows:
 
   # ---------------------------------------------------------------
   # iOS 真机 IPA（需要 Apple 开发者账号 + 签名证书）
-  # 证书在 Codemagic 后台 Team settings → Code signing 里上传，
-  # 然后把下面的 certificate_id / profile_id 换成实际 UUID
+  # 在 Codemagic 后台 Team settings → Code signing 里上传：
+  #   - Code signing identities → iOS certificates：上传 .p12（带私钥）
+  #   - iOS provisioning profiles：上传 .mobileprovision
   # ---------------------------------------------------------------
   ios-ipa:
     name: iOS IPA Release
@@ -58,13 +59,15 @@ workflows:
         # 必须与 Xcode 工程里的 PRODUCT_BUNDLE_IDENTIFIER 一致
         BUNDLE_ID: com.xiaoshiliu.xiaoshiliuApp
       ios_signing:
+        # 按分发类型 + Bundle ID 自动匹配已上传的证书和描述文件，
+        # 不需要手填 certificate_id / profile_id
         distribution_type: app_store
-        certificate_id: ${IOS_CERTIFICATE_ID}
-        profile_id: ${IOS_PROFILE_ID}
+        bundle_identifier: com.xiaoshiliu.xiaoshiliuApp
     scripts:
       - flutter --version
       - flutter pub get
-      # Podfile 已随仓库提交，flutter build ipa 会自动执行 pod install
+      # 把 ios_signing 里匹配到的证书/描述文件装进钥匙串并生成 ExportOptions
+      - xcode-project use-profiles
       - flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
