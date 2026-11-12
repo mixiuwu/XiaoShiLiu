@@ -10,8 +10,8 @@ workflows:
     working_directory: flutter-project
     max_build_duration: 30
     environment:
-      flutter: stable
-      xcode: latest
+      flutter: 3.24.5
+      xcode: 16.2
       cocoapods: default
       vars:
         CM_BUILD_TYPE: release
@@ -37,7 +37,7 @@ workflows:
     working_directory: flutter-project
     max_build_duration: 60
     environment:
-      flutter: stable
+      flutter: 3.24.5
       vars:
         CM_BUILD_TYPE: release
     scripts:
@@ -62,16 +62,22 @@ workflows:
     working_directory: flutter-project
     max_build_duration: 90
     environment:
-      flutter: stable
-      xcode: latest
+      flutter: 3.24.5
+      xcode: 16.2
       cocoapods: default
       vars:
         CM_BUILD_TYPE: release
-        BUNDLE_ID: com.xiaoshiliu.xiaoshiliu-app
+        # 必须与 Xcode 工程里的 PRODUCT_BUNDLE_IDENTIFIER 一致
+        BUNDLE_ID: com.xiaoshiliu.xiaoshiliuApp
+      ios_signing:
+        distribution_type: app_store
+        certificate_id: ${IOS_CERTIFICATE_ID}
+        profile_id: ${IOS_PROFILE_ID}
     scripts:
       - flutter --version
       - flutter pub get
-      - flutter build ios --release --no-codesign
+      # Podfile 已随仓库提交，flutter build ipa 会自动执行 pod install
+      - flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
