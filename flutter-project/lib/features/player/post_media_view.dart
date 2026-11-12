@@ -147,7 +147,7 @@ class _PostMediaViewState extends State<PostMediaView> {
           height: _controller!.value.size.height,
           child: Texture(
             // ignore: invalid_use_of_visible_for_testing_member
-            textureId: _controller!.value.textureId,
+            textureId: _controller!.textureId,
             filterQuality: FilterQuality.high,
           ),
         ),
@@ -159,7 +159,7 @@ class _PostMediaViewState extends State<PostMediaView> {
         // 直接用 Texture 并开启高质量采样，缩放时画面更清晰
         child: Texture(
           // ignore: invalid_use_of_visible_for_testing_member
-          textureId: _controller!.value.textureId,
+          textureId: _controller!.textureId,
           filterQuality: FilterQuality.high,
         ),
       ),
