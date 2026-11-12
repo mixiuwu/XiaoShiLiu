@@ -21,13 +21,6 @@ workflows:
       - flutter build ios --simulator --no-codesign
     artifacts:
       - build/ios/iphonesimulator/*.app.zip
-    publishing:
-      email:
-        recipients:
-          - your@email.com
-        notify:
-          success: true
-          failure: true
 
   # ---------------------------------------------------------------
   # Android Release APK（arm64 + arm，体积小）
@@ -46,16 +39,11 @@ workflows:
       - flutter build apk --release --target-platform android-arm64,android-arm
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - your@email.com
-        notify:
-          success: true
-          failure: true
 
   # ---------------------------------------------------------------
   # iOS 真机 IPA（需要 Apple 开发者账号 + 签名证书）
+  # 证书在 Codemagic 后台 Team settings → Code signing 里上传，
+  # 然后把下面的 certificate_id / profile_id 换成实际 UUID
   # ---------------------------------------------------------------
   ios-ipa:
     name: iOS IPA Release
@@ -80,10 +68,3 @@ workflows:
       - flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
-    publishing:
-      email:
-        recipients:
-          - your@email.com
-        notify:
-          success: true
-          failure: true
